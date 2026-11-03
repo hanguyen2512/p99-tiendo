@@ -22,7 +22,7 @@
 :root{
   --bg:#fff4f2; --surface:#ffffff; --sunk:#fde6e3; --line:#f4cdc8;
   --fg:#2b1418; --muted:#8a5960;
-  --accent:#e8436f; --accent-2:#f97316; --accent-ink:#ffffff; --accent-soft:#fde0e7;
+  --accent:#e8436f; --accent-2:#f97316; --accent-ink:#ffffff; --accent-soft:#fde0e7; --due-bg:#ffd3df; --due-line:#f39ab3; --due-inner:#fff0f4;
   --song:#c2410c; --song-bg:#ffe6d5;
   --story:#be185d; --story-bg:#fce1ee;
   --rec:#c81e1e; --rec-bg:#fde3e3; --ok:#15803d; --ok-bg:#dcf3e3;
@@ -32,12 +32,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1c1013; --surface:#28171b; --sunk:#221316; --line:#46262d;
-  --fg:#fbeaec; --muted:#c79aa2; --accent:#ff7a9c; --accent-2:#fb923c; --accent-ink:#1c1013; --accent-soft:#3d1f28;
+  --fg:#fbeaec; --muted:#c79aa2; --accent:#ff7a9c; --accent-2:#fb923c; --accent-ink:#1c1013; --accent-soft:#3d1f28; --due-bg:#4d1d2d; --due-line:#8a3651; --due-inner:#3a1621;
   --song:#fb923c; --song-bg:#3b2112; --story:#f472b6; --story-bg:#3b1729;
   --rec:#ff6b6b; --rec-bg:#3d1717; --ok:#4ade80; --ok-bg:#163222; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#1c1013; --surface:#28171b; --sunk:#221316; --line:#46262d;
-  --fg:#fbeaec; --muted:#c79aa2; --accent:#ff7a9c; --accent-2:#fb923c; --accent-ink:#1c1013; --accent-soft:#3d1f28;
+  --fg:#fbeaec; --muted:#c79aa2; --accent:#ff7a9c; --accent-2:#fb923c; --accent-ink:#1c1013; --accent-soft:#3d1f28; --due-bg:#4d1d2d; --due-line:#8a3651; --due-inner:#3a1621;
   --song:#fb923c; --song-bg:#3b2112; --story:#f472b6; --story-bg:#3b1729;
   --rec:#ff6b6b; --rec-bg:#3d1717; --ok:#4ade80; --ok-bg:#163222; color-scheme:dark}
 
@@ -82,6 +82,7 @@ h1{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.1;mar
 .deadline span b{color:var(--fg);font-family:var(--mono);font-weight:600}
 .deadline .bx{flex-basis:100%;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .deadline .bx strong{font-family:var(--mono);font-size:20px;color:var(--fg)}
+.deadline .bx b{font-family:var(--mono);color:var(--fg)}
 .deadline .vn{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border-radius:6px;padding:2px 7px;color:var(--muted)}
 .wfoot .vn{background:var(--sunk);border-radius:5px;padding:0 5px}
 details.popup{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
@@ -93,6 +94,11 @@ details.popup p{margin:8px 0 0;font-style:italic}
 
 .work{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .work.complete{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.work.due{background:var(--due-bg);border-color:var(--due-line)}
+.work.due .step:not([aria-pressed="true"]){background:var(--due-inner);border-color:var(--due-line)}
+.work.due .file,.work.due .wfoot{color:var(--fg);opacity:.75}
+.sec.today{color:var(--accent)}
+.row.due{background:var(--due-bg);border-color:var(--due-line)}
 .wtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .chip{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px}
 .chip.song{background:var(--song-bg);color:var(--song)}
@@ -195,8 +201,8 @@ details.popup p{margin:8px 0 0;font-style:italic}
       <div class="field"><label for="fKind">Loại</label><select id="fKind"><option value="song">Bài hát</option><option value="story">Truyện</option></select></div>
     </div>
     <div class="two">
-      <div class="field"><label for="fDate">Ngày hạn (giờ Bỉ)</label><input type="date" id="fDate" min="2026-10-31" max="2026-11-30" required></div>
-      <div class="field"><label for="fTime">Giờ hạn (giờ Bỉ)</label><input type="time" id="fTime" required></div>
+      <div class="field"><label for="fDate">Ngày lên bài (giờ Bỉ)</label><input type="date" id="fDate" min="2026-10-31" max="2026-11-30" required></div>
+      <div class="field"><label for="fTime">Giờ lên bài (giờ Bỉ)</label><input type="time" id="fTime" required></div>
     </div>
     <p class="hint" id="fLocal"></p>
     <div class="field"><label for="fNote">Ghi chú</label><textarea id="fNote" maxlength="2000"></textarea></div>
@@ -226,7 +232,9 @@ function parts(dt,tz){
     .formatToParts(dt).forEach(x=>p[x.type]=x.value);
   return{date:`${p.year}-${p.month}-${p.day}`,time:`${p.hour}:${p.minute}`};
 }
-const dl=w=>new Date(`${w.date}T${w.time||"23:59"}:00+07:00`);
+const BUFFER_H=3; /* finish this many hours before the release */
+const rel=w=>new Date(`${w.date}T${w.time||"23:59"}:00+07:00`);
+const dl=w=>new Date(rel(w).getTime()-BUFFER_H*36e5);
 const bDate=w=>parts(dl(w),BX).date;
 const bxToday=()=>parts(new Date(),BX).date;
 function fromBx(d,t){ /* Belgian wall time -> instant */
@@ -278,16 +286,16 @@ function render(){
   $("view").innerHTML=tab==="day"?dayView():listView();
 }
 
-function card(w){
+function card(w,today){
   const late=isLate(w), comp=isDone(w), due=dl(w);
-  return`<article class="work${comp?" complete":""}" data-id="${esc(w.id)}">
+  return`<article class="work${comp?" complete":""}${today?" due":""}" data-id="${esc(w.id)}">
     <div class="wtop"><span class="chip ${w.kind}">${esc(sideLbl(w))}</span>${late?'<span class="chip late">Quá hạn</span>':comp?'<span class="chip ok">Xong</span>':""}
       ${w.file?`<span class="file">${esc(w.file)}</span>`:""}<button type="button" class="edit" data-edit="${esc(w.id)}">Sửa</button></div>
     <h3>${esc(title(w))}</h3>
     ${w.note?`<p class="note">${esc(w.note)}</p>`:""}
     <div class="steps">${stepsOf(w).map(([k,l],i)=>{const t=w.steps?.[k];
       return`<button type="button" class="step" data-w="${esc(w.id)}" data-k="${k}" aria-pressed="${!!t}"><span class="box">✓</span><span class="lab">${i+1}. ${l}<small>${t?"xong "+atBx(new Date(t)):"chưa xong"}</small></span></button>`}).join("")}</div>
-    <div class="wfoot"><span>${doneN(w)}/${stepsOf(w).length} bước</span><span>hạn <b>${atBx(due)}</b> Bỉ · <span class="vn">${atVn(due)} VN</span></span></div>
+    <div class="wfoot"><span>${doneN(w)}/${stepsOf(w).length} bước · hạn <b>${atBx(due)}</b> Bỉ</span><span>lên bài ${atBx(rel(w))} Bỉ · <span class="vn">${atVn(rel(w))} VN</span></span></div>
   </article>`;
 }
 
@@ -299,18 +307,19 @@ function dayView(){
   for(const ts of dls){
     const due=new Date(ts), group=ws.filter(w=>dl(w).getTime()===ts), ms=due-new Date(), all=group.every(isDone);
     const cd=all?`<span class="cd done">Đã xong hết</span>`:ms>0?`<span class="cd">Còn ${left(ms)}</span>`:`<span class="cd late">Quá hạn ${left(ms)}</span>`;
-    h+=`<div class="deadline"><div class="bx"><span>Hạn</span><strong>${parts(due,BX).time}</strong><span>giờ Bỉ</span><span class="vn">= ${atVn(due)} giờ VN</span></div>${cd}</div>`;
+    const r=new Date(ts+BUFFER_H*36e5);
+    h+=`<div class="deadline"><div class="bx"><span>Hạn làm xong</span><strong>${parts(due,BX).time}</strong><span>giờ Bỉ</span></div><div class="bx"><span>Lên bài</span><b>${atBx(r)}</b><span>Bỉ</span><span class="vn">${atVn(r)} VN</span></div>${cd}</div>`;
   }
   for(const vd of [...new Set(ws.map(w=>w.date))]){
     const info=days[vd];
     if(info?.popup)h+=`<details class="popup"><summary>Pop-up message${info.time?" · "+esc(info.time)+" VN":""}</summary><p>${esc(info.popup)}</p></details>`;
   }
   h+=`</section>`;
-  h+=ws.length?ws.map(card).join(""):`<div class="nothing">Ngày ${p.d}/${p.m} không có hạn nào. Tranh thủ làm trước cho ngày sau nhé.</div>`;
+  h+=ws.length?`<p class="sec today">Hạn trong ngày (${ws.length})</p>`+ws.map(w=>card(w,true)).join(""):`<div class="nothing">Ngày ${p.d}/${p.m} không có hạn nào. Tranh thủ làm trước cho ngày sau nhé.</div>`;
   const late=works.filter(w=>bDate(w)<sel&&isLate(w)).sort(byDl);
-  if(late.length)h+=`<p class="sec warn">Ngày trước chưa xong (${late.length})</p>`+late.map(card).join("");
+  if(late.length)h+=`<p class="sec warn">Ngày trước chưa xong (${late.length})</p>`+late.map(w=>card(w,false)).join("");
   const next=works.filter(w=>bDate(w)>sel&&!isDone(w)).sort(byDl).slice(0,3);
-  if(next.length)h+=`<p class="sec">Sắp tới, có thể làm trước</p>`+next.map(card).join("");
+  if(next.length)h+=`<p class="sec">Sắp tới, có thể làm trước</p>`+next.map(w=>card(w,false)).join("");
   return h;
 }
 
@@ -323,8 +332,8 @@ function listView(){
   if(!dates.length)h+=`<div class="nothing">${works.length?"Không còn gì cần làm ở mục này.":"Chưa có lịch."}</div>`;
   for(const d of dates){
     const g=ws.filter(w=>bDate(w)===d).sort(byDl), p=dParts(d), due=dl(g[0]);
-    h+=`<section class="group"><h3>${p.wd} ${p.d}/${p.m}<small>hạn ${parts(due,BX).time} Bỉ · ${atVn(due)} VN</small></h3>`+g.map(w=>`
-      <button type="button" class="row" data-go="${esc(w.id)}"><span class="chip ${w.kind}">${w.kind==="song"?"♪":"✎"}</span>
+    h+=`<section class="group"><h3>${p.wd} ${p.d}/${p.m}<small>hạn ${parts(due,BX).time} Bỉ · lên bài ${parts(rel(g[0]),BX).time} Bỉ / ${atVn(rel(g[0]))} VN</small></h3>`+g.map(w=>`
+      <button type="button" class="row${d===bxToday()?" due":""}" data-go="${esc(w.id)}"><span class="chip ${w.kind}">${w.kind==="song"?"♪":"✎"}</span>
         <span class="t"><b>${esc(title(w))}</b><small>${esc(sideLbl(w))}${isLate(w)?" · quá hạn":""}</small></span>
         <span class="pips">${stepsOf(w).map(([k])=>`<i class="${w.steps?.[k]?"on":""}"></i>`).join("")}</span></button>`).join("")+`</section>`;
   }
@@ -351,13 +360,14 @@ function openForm(w){
   editing=w;delArmed=false;
   $("fHead").textContent="Sửa: "+title(w);
   $("fTitle").value=w.title||"";$("fFile").value=w.file||"";$("fKind").value=w.kind;
-  const b=parts(dl(w),BX);$("fDate").value=b.date;$("fTime").value=b.time;$("fNote").value=w.note||"";
+  const b=parts(rel(w),BX);$("fDate").value=b.date;$("fTime").value=b.time;$("fNote").value=w.note||"";
   $("delBtn").textContent="Xoá";$("delBtn").className="btn ghost";$("err").hidden=true;
   localHint();$("overlay").hidden=false;
 }
 function localHint(){
   const d=$("fDate").value,t=$("fTime").value;
-  $("fLocal").textContent=d&&t?`= ${atVn(fromBx(d,t))} giờ Việt Nam`:"";
+  if(!d||!t){$("fLocal").textContent="";return}
+  const r=fromBx(d,t);$("fLocal").textContent=`= ${atVn(r)} giờ VN · hạn làm xong ${atBx(new Date(r.getTime()-BUFFER_H*36e5))} giờ Bỉ`;
 }
 $("fDate").oninput=localHint;$("fTime").oninput=localHint;
 const closeForm=()=>{$("overlay").hidden=true;editing=null};

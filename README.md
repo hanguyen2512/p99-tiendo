@@ -1,17 +1,17 @@
 # P99 · Sổ Tiến Độ
 
 App theo dõi tiến độ bài hát và truyện của App P99, từ 1/11 đến 22/11/2026.
-Hạn chót hiển thị theo giờ Bỉ, có giờ Việt Nam đi kèm.
+Hạn làm xong = giờ lên bài trừ 3 tiếng, tính theo giờ Bỉ. Giờ lên bài hiện cả giờ Bỉ và giờ Việt Nam.
 
 - Bài hát: Viết bài → Sửa hoà thanh → Thu âm → Làm video → Upload
 - Truyện: Viết truyện → Thu âm → Upload (mỗi phần một thẻ)
 
 ## Đưa lên GitHub Pages
 
-1. Tạo repo mới trên GitHub, ví dụ `p99-tien-do`.
+1. Tạo repo mới trên GitHub, ví dụ `p99-tiendo`.
 2. Bấm **Add file → Upload files**, kéo toàn bộ các file trong thư mục này vào, rồi bấm **Commit changes**.
 3. Vào **Settings → Pages**. Ở mục *Source* chọn **Deploy from a branch**, chọn nhánh `main`, thư mục `/ (root)`, rồi bấm **Save**.
-4. Đợi khoảng 1 phút. Link app sẽ có dạng `https://<tên-github>.github.io/p99-tien-do/`.
+4. Đợi khoảng 1 phút. Link app sẽ có dạng `https://<tên-github>.github.io/p99-tiendo/`.
 
 ## Cài lên điện thoại
 
